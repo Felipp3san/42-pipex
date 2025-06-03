@@ -73,7 +73,7 @@ void	execute_command(char *fullpath, char **command)
 		waitpid(pid, NULL, 0);
 }
 
-int	execute_pipeline(char ***commands, char **paths, int pipe_fd[2])
+int	execute_pipeline(char ***commands, char **paths)
 {
 	char	*full_path;
 	int		bin_found;
@@ -91,7 +91,7 @@ int	execute_pipeline(char ***commands, char **paths, int pipe_fd[2])
 			bin_found = access(full_path, F_OK);
 			if (bin_found == 0)
 			{
-				execute_command(full_path, *commands, pipe_fd);
+				execute_command(full_path, *commands);
 				break ;
 			}
 			free(full_path);
@@ -107,11 +107,11 @@ int	execute_pipeline(char ***commands, char **paths, int pipe_fd[2])
 	return (0);
 }
 
-
-/* Opens input file, redirects stdin, creates pipe */
-int	setup_env(char *filename, int	*pipe_fd)
+/* Opens input file, redirects it to stdin */
+int	setup_input(char *filename)
 {
 	int	input_fd;
+	int	new_fd;
 
 	input_fd = open_file(filename, 0);
 	if (input_fd == -1)
@@ -119,9 +119,22 @@ int	setup_env(char *filename, int	*pipe_fd)
 		ft_printf("pipex: %s: %s\n", strerror(errno), filename);
 		exit(EXIT_FAILURE);
 	}
-	dup2(input_fd, 0);
+	new_fd = dup2(input_fd, 0);
+	if (new_fd == -1)
+	{
+		ft_printf("pipex: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	close(input_fd);
-	if (pipe(pipe_fd) == -1)
+	return (0);
+}
+
+int	init_pipe(int pipe_fd[2])
+{
+	int	status;
+
+	status = pipe(pipe_fd);
+	if (status == -1)
 	{
 		perror("pipe");
 		exit(EXIT_FAILURE);
@@ -137,7 +150,8 @@ int	main(int argc, char *argv[], char *envp[])
 
 	if (argc > 1)
 	{
-		setup_env(*(++argv), &pipe_fd);
+		setup_input(*(++argv));
+		init_pipe(pipe_fd);
 		commands = parse_commands(argc, ++argv);
 		if (!commands)
 			exit(EXIT_FAILURE);

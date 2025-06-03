@@ -23,7 +23,7 @@
 #include "libft.h"
 
 char	*build_cmd_path(char *path, char *command);
-int		open_file(char filename, int );
+int		open_file(char *filename, int file_type);
 void	free_split(char **arr);
 
 #endif

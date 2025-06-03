@@ -13,15 +13,15 @@
 #include "pipex.h"
 
 /* Open the file and returns its FD 
-	0: input - 1: output */
-int	open_file(char filename, int )
+	file_type: 0 - input | 1 - output */
+int	open_file(char *filename, int file_type)
 {
 	int	fd;
 
 	fd = -1;
-	if (option == 0)
+	if (file_type == 0)
 		fd = open(filename, O_RDONLY);
-	if (option == 1)
+	if (file_type == 1)
 		fd = open(filename, O_CREAT | O_WRONLY, 0644);
 	return (fd);
 }
