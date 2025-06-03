@@ -5,154 +5,146 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: fde-alme <fde-alme@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/02 19:48:46 by fde-alme          #+#    #+#             */
-/*   Updated: 2025/06/02 22:48:20 by fde-alme         ###   ########.fr       */
+/*   Created: 2025/06/03 18:26:02 by fde-alme          #+#    #+#             */
+/*   Updated: 2025/06/03 20:33:32 by fde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-void	execute_commands()
+char	**extract_paths_envp(char *envp[])
 {
-
-}
-
-void	free_split(char **arr)
-{
-	size_t	i;
-
-	i = 0;
-	if (!arr)
-		return ;
-	while (arr[i])
-	{
-		free(arr[i]);
-		i++;
-	}
-	free(arr);
-}
-
-char	***parse_args(int argc, char *argv[])
-{
-	char	***args;
-	char	**split_args;
-	int		i;
-
-	i = 0;
-	args = (char ***) malloc(argc * sizeof(char *) + 1);
-	if (!args)
-		return (NULL);
-	while (argv[i + 1])
-	{
-		split_args = ft_split(argv[i + 1], ' ');
-		if (!split_args)
-		{
-			i = 0;
-			while(i < argc)
-				free_split(args[i++]);
-			return (free(args), NULL);
-		}
-		args[i] = split_args;
-		i++;
-	}
-	args[i] = NULL;
-	return (args);
-}
-
-ssize_t	check_args(char ***args, char **paths, size_t path_count)
-{
-	size_t	i;
-	size_t	j;
-	int		result;
-	char	*path_slash;
-	char	*full_path;
-
-	i = 0;
-	while (*args)
-	{
-		if (i == 0 || i == 3)
-		{
-			result = access(*args[i], F_OK);
-			if (result == -1)
-			{
-				ft_printf("%s: %s", strerror(errno), *args[i]);
-				return (-1);
-			}
-		}
-		if (i == 1 || i == 2)
-		{
-			j = 0;
-			while (j < path_count)
-			{		
-				path_slash = ft_strjoin(paths[j], "/");
-				full_path = ft_strjoin(path_slash, *args[i]);
-				free(path_slash);
-				if (access(full_path, F_OK | X_OK) == 0)
-					break;
-				j++;
-			}
-			if (result == -1)
-			{
-				ft_printf("%s: %s", strerror(errno), *args[i]);
-				return (-1);
-			}
-			i++;
-		}
-		args++;
-	}
-	return (0);
-}
-
-size_t	extract_paths_envp(char **envp, char ***paths)
-{
+	char	**paths;
 	char	*env_path;
-	int		count;
 
+	paths = NULL;
 	env_path = NULL;
 	while (*envp && !env_path)
 	{
 		if (ft_strncmp(*envp, "PATH=", 5) == 0)
+		{
 			env_path = *envp + 5;
+			break ;
+		}
 		envp++;
 	}
-	if (env_path && paths)
-		*paths = ft_split(env_path, ':');
-	count = 0;
-	while (paths && paths[count])
-		count++;
-	return (count);
+	if (env_path)
+		paths = ft_split(env_path, ':');
+	return (paths);
 }
 
-int	main(int argc, char *argv[], char **envp)
+/* Create a matrix of commands with its arguments 
+	ex: [["ls", "-la"], ["wc", "-l"]] */
+char	***parse_commands(int argc, char *argv[])
 {
-	char	***args;
-	char	**paths;
-	size_t	path_count;
+	char	***commands;
+	char	**split_args;
+	int		i;
 
-	if (argc > 1)
+	i = 0;
+	commands = (char ***) malloc(argc * sizeof(char *));
+	if (!commands)
+		return (NULL);
+	while (i < argc - 1)
 	{
-		args = parse_args(argc, argv);
-		path_count = extract_paths_envp(envp, &paths);
-		if (args)
-			check_args(args, paths, path_count);
+		split_args = ft_split(argv[i], ' ');
+		if (!split_args)
+		{
+			i = 0;
+			while(i < argc)
+				free_split(commands[i++]);
+			return (free(commands), NULL);
+		}
+		commands[i] = split_args;
+		i++;
 	}
-	
+	commands[i] = NULL;
+	return (commands);
+}
+
+void	execute_command(char *fullpath, char **command)
+{
+	int	pid;
+
+	pid = fork();
+	if (pid == 0)
+		execv(fullpath,	command);
+	else
+		waitpid(pid, NULL, 0);
+}
+
+int	execute_pipeline(char ***commands, char **paths, int pipe_fd[2])
+{
+	char	*full_path;
+	int		bin_found;
+	int		i;
+
+	while (**commands)
+	{
+		i = 0;
+		bin_found = -1;
+		while (paths[i])
+		{
+			full_path = build_cmd_path(paths[i], **commands);
+			if (!full_path)
+				return (-1);
+			bin_found = access(full_path, F_OK);
+			if (bin_found == 0)
+			{
+				execute_command(full_path, *commands, pipe_fd);
+				break ;
+			}
+			free(full_path);
+			i++;
+		}
+		if (bin_found == -1)
+		{
+			ft_printf("pipex: command not found: %s\n", **commands);
+			exit(EXIT_FAILURE);
+		}
+		commands++;
+	}
 	return (0);
 }
 
-void	print_matrix(char ***args)
-{
-	size_t	i;
 
-	ft_printf("[\n");
-	while (*args)
+/* Opens input file, redirects stdin, creates pipe */
+int	setup_env(char *filename, int	*pipe_fd)
+{
+	int	input_fd;
+
+	input_fd = open_file(filename, 0);
+	if (input_fd == -1)
 	{
-		i = 0;
-		ft_printf(" [");
-		while((*args)[i])
-			ft_printf("%s, ", (*args)[i++]);
-		ft_printf("]\n");
-		args++;
+		ft_printf("pipex: %s: %s\n", strerror(errno), filename);
+		exit(EXIT_FAILURE);
 	}
-	ft_printf("]\n");
+	dup2(input_fd, 0);
+	close(input_fd);
+	if (pipe(pipe_fd) == -1)
+	{
+		perror("pipe");
+		exit(EXIT_FAILURE);
+	}
+	return (0);
+}
+
+int	main(int argc, char *argv[], char *envp[])
+{
+	char	***commands;
+	char	**paths;
+	int		pipe_fd[2];
+
+	if (argc > 1)
+	{
+		setup_env(*(++argv), &pipe_fd);
+		commands = parse_commands(argc, ++argv);
+		if (!commands)
+			exit(EXIT_FAILURE);
+		paths = extract_paths_envp(envp);
+		if (!paths)
+			exit(EXIT_FAILURE);
+		execute_pipeline(commands, paths);
+	}
+	return (0);
 }

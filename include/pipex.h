@@ -6,7 +6,7 @@
 /*   By: fde-alme <fde-alme@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/02 19:41:44 by fde-alme          #+#    #+#             */
-/*   Updated: 2025/06/02 21:09:10 by fde-alme         ###   ########.fr       */
+/*   Updated: 2025/06/03 20:33:40 by fde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,5 +21,9 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include "libft.h"
+
+char	*build_cmd_path(char *path, char *command);
+int		open_file(char filename, int );
+void	free_split(char **arr);
 
 #endif
