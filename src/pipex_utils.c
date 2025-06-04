@@ -54,3 +54,19 @@ void	free_split(char **arr)
 	}
 	free(arr);
 }
+
+void	cleanup_pipex(t_pipex *pipex)
+{
+	if (pipex->cmds)
+	{
+		while (*(pipex->cmds))
+		{
+			free_split(*(pipex->cmds));
+			pipex->cmds++;
+		}
+		free(pipex->cmds);
+	}
+	if (pipex->paths)
+		free_split(pipex->paths);
+	free(pipex);
+}

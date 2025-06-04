@@ -22,8 +22,16 @@
 #include <errno.h>
 #include "libft.h"
 
+typedef struct s_pipex
+{
+	char	***cmds;
+	char	**paths;
+	int		pipe_fd[2];
+}	t_pipex;
+
 char	*build_cmd_path(char *path, char *command);
 int		open_file(char *filename, int file_type);
 void	free_split(char **arr);
+void	cleanup_pipex(t_pipex *pipex);
 
 #endif
