@@ -2,3 +2,4 @@ compile_commands.json
 outfile.txt
 test.txt
 pipex
+./build
