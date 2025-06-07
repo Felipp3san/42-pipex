@@ -4,3 +4,5 @@ test.txt
 pipex
 build
 .cache
+pipex_tester
+tester_pipex.sh

@@ -84,7 +84,7 @@ t_pipex	*init_pipex(int argc, char **argv, char **envp)
 	pipex->paths = extract_paths_envp(envp);
 	pipex->infile_fd = open_file(argv[1], 0);
 	pipex->outfile_fd = open_file(argv[argc - 1], 1);
-	if (!pipex->cmds || !pipex->paths || pipex->outfile_fd == -1)
+	if (!pipex->cmds || pipex->outfile_fd == -1)
 		return (free_pipex(pipex), NULL);
 	else
 		return (pipex);
