@@ -36,6 +36,16 @@ int	open_file(char *filename, int filetype)
 	return (fd);
 }
 
+void	init_pipe(t_pipex *pipex)
+{
+	if (pipe(pipex->pipe_fd) == -1)
+	{
+		ft_dprintf(2, "pipex: pipe: %s\n", strerror(errno));
+		free_pipex(pipex);
+		exit(EXIT_FAILURE);
+	}
+}
+
 /* Frees the strings and the array allocated by the function ft_split */
 void	free_split(char **arr)
 {

@@ -12,11 +12,17 @@
 
 #include "pipex.h"
 
-void	execute_command(t_pipex *pipex, int cmd_idx, int end)
+int	execute_command(t_pipex *pipex, int cmd_idx, int end)
 {
 	int	pid;
 
+	init_pipe(pipex);
 	pid = fork();
+	if (pid == -1)
+	{
+		free_pipex(pipex);
+		exit(EXIT_FAILURE);
+	}
 	if (pid == 0)
 	{
 		close(pipex->pipe_fd[0]);
@@ -36,8 +42,15 @@ void	execute_command(t_pipex *pipex, int cmd_idx, int end)
 		dup2(pipex->pipe_fd[0], STDIN_FILENO);
 		close(pipex->pipe_fd[0]);
 		close(pipex->pipe_fd[1]);
-		waitpid(pid, NULL, 0);
 	}
+	return (pid);
+}
+
+void	wait_children()
+{
+	int	status;
+
+	while(wait(&status) > 0);
 }
 
 void	execute_pipeline(t_pipex *pipex)
@@ -52,12 +65,6 @@ void	execute_pipeline(t_pipex *pipex)
 			ft_dprintf(2, "pipex: command not found: %s\n", *(pipex->cmds[i]));
 		else
 		{
-			if (pipe(pipex->pipe_fd) == -1)
-			{
-				ft_dprintf(2, "pipex: pipe: %s\n", strerror(errno));
-				free_pipex(pipex);
-				exit(EXIT_FAILURE);
-			}
 			if (i == pipex->cmd_count - 1)
 				execute_command(pipex, i, 1);
 			else
@@ -67,6 +74,7 @@ void	execute_pipeline(t_pipex *pipex)
 		}
 		i++;
 	}
+	wait_children();
 }
 
 t_pipex	*init_pipex(int argc, char **argv, char **envp)

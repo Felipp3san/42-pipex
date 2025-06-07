@@ -33,6 +33,7 @@ typedef struct s_pipex
 	int		cmd_count;
 }	t_pipex;
 
+void	init_pipe(t_pipex *pipex);
 int		open_file(char *filename, int file_type);
 void	free_split(char **arr);
 void	free_pipex(t_pipex *pipex);
