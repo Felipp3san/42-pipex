@@ -6,163 +6,87 @@
 /*   By: fde-alme <fde-alme@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 18:26:02 by fde-alme          #+#    #+#             */
-/*   Updated: 2025/06/03 20:33:32 by fde-alme         ###   ########.fr       */
+/*   Updated: 2025/06/07 13:48:01 by fde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-char	**extract_paths_envp(char *envp[])
-{
-	char	**paths;
-	char	*env_path;
-
-	paths = NULL;
-	env_path = NULL;
-	while (*envp && !env_path)
-	{
-		if (ft_strncmp(*envp, "PATH=", 5) == 0)
-		{
-			env_path = *envp + 5;
-			break ;
-		}
-		envp++;
-	}
-	if (env_path)
-		paths = ft_split(env_path, ':');
-	return (paths);
-}
-
-/* Create a matrix of commands with its arguments 
-	ex: [["ls", "-la"], ["wc", "-l"]] */
-char	***parse_commands(int argc, char **argv)
-{
-	char	***commands;
-	char	**split_args;
-	int		i;
-
-	i = 0;
-	commands = (char ***) malloc(argc * sizeof(char *));
-	if (!commands)
-		return (NULL);
-	while (i < argc - 2)
-	{
-		split_args = ft_split(argv[i], ' ');
-		if (!split_args)
-		{
-			i = 0;
-			while(i < argc)
-				free_split(commands[i++]);
-			return (free(commands), NULL);
-		}
-		commands[i] = split_args;
-		i++;
-	}
-	commands[i] = NULL;
-	return (commands);
-}
-
-void	execute_command(char *fullpath, char **command)
+void	execute_command(t_pipex *pipex, int cmd_idx, int end)
 {
 	int	pid;
 
 	pid = fork();
 	if (pid == 0)
-		execv(fullpath,	command);
-	else
-		waitpid(pid, NULL, 0);
-}
-
-char	*bin_lookup(char *command, char **paths)
-{
-	char	*bin_path;
-	int		bin_found;
-
-	bin_found = -1;
-	while (*paths)
 	{
-		bin_path = build_cmd_path(*paths, command);
-		if (!bin_path)
-			return (NULL);
-		bin_found = access(bin_path, F_OK);
-		if (bin_found == 0)
-			return (bin_path);
-		free(bin_path);
-		paths++;
+		close(pipex->pipe_fd[0]);
+		if (end)
+			dup2(pipex->outfile_fd, STDOUT_FILENO);
+		else
+			dup2(pipex->pipe_fd[1], STDOUT_FILENO);
+		close(pipex->pipe_fd[1]);
+		if (execv(pipex->cmd_path, pipex->cmds[cmd_idx]) == -1)
+		{
+			free_pipex(pipex);
+			exit(EXIT_FAILURE);
+		}
 	}
-	return (NULL);
+	else
+	{
+		dup2(pipex->pipe_fd[0], STDIN_FILENO);
+		close(pipex->pipe_fd[0]);
+		close(pipex->pipe_fd[1]);
+		waitpid(pid, NULL, 0);
+	}
 }
 
-int	execute_cmds(t_pipex *pipex)
+int	execute_pipeline(t_pipex *pipex)
 {
-	char	**cmd_args;
-	char	*cmd_path;
 	int		i;
 
 	i = 0;
-	cmd_args = *(pipex->cmds);
-	while (cmd_args)
+	while (i < pipex->cmd_count)
 	{
-		cmd_path = bin_lookup(cmd_args[0], pipex->paths);
-		if (!cmd_path)
-			ft_printf("pipex: command not found: %s\n", *(pipex->cmds[i]));
+		pipex->cmd_path = bin_lookup(*(pipex->cmds[i]), pipex->paths);
+		if (!pipex->cmd_path)
+			ft_dprintf(2, "pipex: command not found: %s\n", *(pipex->cmds[i]));
 		else
-			execute_command(cmd_path, pipex->cmds[i]);
-		cmd_args++;
-	}
-	return (0);
-}
-
-/* Opens input file, redirects it to stdin */
-int	setup_input(char *filename)
-{
-	int	input_fd;
-	int	new_fd;
-
-	input_fd = open_file(filename, 0);
-	if (input_fd == -1)
-		ft_printf("pipex: %s: %s\n", strerror(errno), filename);
-	else {
-		new_fd = dup2(input_fd, 0);
-		if (new_fd == -1)
 		{
-			ft_printf("pipex: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
+			if (pipe(pipex->pipe_fd) == -1)
+			{
+				ft_dprintf(2, "pipex: pipe: %s\n", strerror(errno));
+				free_pipex(pipex);
+				exit(EXIT_FAILURE);
+			}
+			if (i == pipex->cmd_count - 1)
+				execute_command(pipex, i, 1);
+			else
+				execute_command(pipex, i, 0);
+			free(pipex->cmd_path);
+			pipex->cmd_path = NULL;
 		}
-		close(input_fd);
+		i++;
 	}
 	return (0);
 }
 
-int	init_pipe(int pipe_fd[2])
-{
-	int	status;
-
-	status = pipe(pipe_fd);
-	if (status == -1)
-	{
-		perror("pipe");
-		exit(EXIT_FAILURE);
-	}
-	return (0);
-}
-
-
-/* Initializes pipex struct with data from argv */
 t_pipex	*init_pipex(int argc, char **argv, char **envp)
 {
 	t_pipex	*pipex;
+	int		cmd_count;
 
+	cmd_count = argc - 3;
 	pipex = (t_pipex *) malloc(sizeof(t_pipex));
 	if (!pipex)
 		return (NULL);
-	pipex->cmds = parse_commands(argc, ++argv);
+	pipex->cmd_path = NULL;
+	pipex->cmds = parse_commands(argv, cmd_count);
+	pipex->cmd_count = cmd_count;
 	pipex->paths = extract_paths_envp(envp);
-	if (!pipex->cmds || !pipex->paths)
-	{
-		cleanup_pipex(pipex);
-		return (NULL);
-	}
+	pipex->infile_fd = open_file(argv[1], 0);
+	pipex->outfile_fd = open_file(argv[argc - 1], 1);
+	if (!pipex->cmds || !pipex->paths || pipex->outfile_fd == -1)
+		return (free_pipex(pipex), NULL);
 	else
 		return (pipex);
 }
@@ -171,13 +95,15 @@ int	main(int argc, char **argv, char **envp)
 {
 	t_pipex	*pipex;
 
-	if (argc > 1)
+	if (argc < 4) 
 	{
-		setup_input(*(++argv));
-		pipex = init_pipex(argc, argv, envp);
-		if (!pipex)
-			exit(EXIT_FAILURE);
-		execute_cmds(pipex);
+		ft_dprintf(2, "Usage: %s infile \"cmd1\" [\"cmd2\" ...] outfile\n", argv[0]);
+		return (EXIT_FAILURE);
 	}
-	return (0);
+	pipex = init_pipex(argc, argv, envp);
+	if (!pipex)
+		return (EXIT_FAILURE);
+	execute_pipeline(pipex);
+	free_pipex(pipex);
+	return (EXIT_SUCCESS);
 }

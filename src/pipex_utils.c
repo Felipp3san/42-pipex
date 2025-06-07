@@ -6,37 +6,34 @@
 /*   By: fde-alme <fde-alme@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/03 20:19:34 by fde-alme          #+#    #+#             */
-/*   Updated: 2025/06/03 20:24:15 by fde-alme         ###   ########.fr       */
+/*   Updated: 2025/06/07 13:30:09 by fde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-/* Open the file and returns its FD 
-	file_type: 0 - input | 1 - output */
-int	open_file(char *filename, int file_type)
+/* Open the file and returns its FD. file_type: 0 - input | 1 - output */
+int	open_file(char *filename, int filetype)
 {
 	int	fd;
 
-	fd = -1;
-	if (file_type == 0)
+	if (filetype == 0)
+	{
 		fd = open(filename, O_RDONLY);
-	if (file_type == 1)
-		fd = open(filename, O_CREAT | O_WRONLY, 0644);
+		if (fd == -1)
+		{
+			ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), filename);
+			fd = open("/dev/null", O_RDONLY);
+		}
+		dup2(fd, STDIN_FILENO);
+	}
+	if (filetype == 1)
+	{
+		fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+		if (fd == -1)
+			ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), filename);
+	}
 	return (fd);
-}
-
-/* Joins the provided path and command to form the fullpath
-	Ex: "/usr/bin" "grep" turns into "/usr/bin/grep" */
-char	*build_cmd_path(char *path, char *command)
-{
-	char	*path_slash;
-	char	*full_path;
-
-	path_slash = ft_strjoin(path, "/");
-	full_path = ft_strjoin(path_slash, command);
-	free(path_slash);
-	return (full_path);
 }
 
 /* Frees the strings and the array allocated by the function ft_split */
@@ -50,23 +47,34 @@ void	free_split(char **arr)
 	while (arr[i])
 	{
 		free(arr[i]);
+		arr[i] = NULL;
 		i++;
 	}
 	free(arr);
 }
 
-void	cleanup_pipex(t_pipex *pipex)
+/* Frees up the pipex struct */
+void	free_pipex(t_pipex *pipex)
 {
+	int	i;
+
 	if (pipex->cmds)
 	{
-		while (*(pipex->cmds))
+		i = 0;
+		while (i < pipex->cmd_count)
 		{
-			free_split(*(pipex->cmds));
-			pipex->cmds++;
+			free_split(pipex->cmds[i]);
+			pipex->cmds[i] = NULL;
+			i++;
 		}
 		free(pipex->cmds);
+		pipex->cmds = NULL;
 	}
 	if (pipex->paths)
 		free_split(pipex->paths);
+	if (pipex->infile_fd > 0)
+		close(pipex->infile_fd);
+	if (pipex->outfile_fd > 0)
+		close(pipex->outfile_fd);
 	free(pipex);
 }
