@@ -18,7 +18,7 @@ char	***parse_commands(char **argv, int cmd_count)
 	char	***cmds;
 	int		i;
 
-	i = 0; 
+	i = 0;
 	cmds = (char ***) malloc((cmd_count * sizeof(char **)));
 	if (!cmds)
 		return (NULL);
@@ -27,7 +27,7 @@ char	***parse_commands(char **argv, int cmd_count)
 		cmds[i] = ft_split(argv[i + 2], ' ');
 		if (!cmds[i])
 		{
-			while(i--)
+			while (i--)
 				free_split(cmds[i]);
 			return (free(cmds), NULL);
 		}

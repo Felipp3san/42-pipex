@@ -40,9 +40,9 @@ void	execute_command(t_pipex *pipex, int cmd_idx, int end)
 	}
 }
 
-int	execute_pipeline(t_pipex *pipex)
+void	execute_pipeline(t_pipex *pipex)
 {
-	int		i;
+	int	i;
 
 	i = 0;
 	while (i < pipex->cmd_count)
@@ -67,7 +67,6 @@ int	execute_pipeline(t_pipex *pipex)
 		}
 		i++;
 	}
-	return (0);
 }
 
 t_pipex	*init_pipex(int argc, char **argv, char **envp)
@@ -95,9 +94,11 @@ int	main(int argc, char **argv, char **envp)
 {
 	t_pipex	*pipex;
 
-	if (argc < 4) 
+	if (argc < 4)
 	{
-		ft_dprintf(2, "Usage: %s infile \"cmd1\" [\"cmd2\" ...] outfile\n", argv[0]);
+		ft_dprintf(2,
+			"Usage: %s infile \"cmd1\" [\"cmd2\" ...] outfile\n",
+			argv[0]);
 		return (EXIT_FAILURE);
 	}
 	pipex = init_pipex(argc, argv, envp);
