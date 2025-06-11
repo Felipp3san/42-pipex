@@ -6,3 +6,7 @@ build
 .cache
 pipex_tester
 tester_pipex.sh
+tester_bonus.sh
+tests
+tester.sh
+pipex-tester

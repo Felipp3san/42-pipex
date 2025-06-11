@@ -5,14 +5,14 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: fde-alme <fde-alme@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/10 19:15:52 by fde-alme          #+#    #+#             */
-/*   Updated: 2025/06/10 19:18:03 by fde-alme         ###   ########.fr       */
+/*   Created: 2025/06/11 20:11:56 by fde-alme          #+#    #+#             */
+/*   Updated: 2025/06/11 20:14:20 by fde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 int	ft_strcmp(const char *s1, const char *s2)
 {
-	while (*s1 && *s2 && *s1 == *s2)
+	while (*s1 && *s2 && (*s1 == *s2))
 	{
 		s1++;
 		s2++;

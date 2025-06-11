@@ -30,27 +30,27 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 	@$(AR) $(NAME) $(OBJS)
-	@echo -e "$(GREEN)$(subst .a,,$(NAME)) compiled! $(DEF_COLOR)"
+	@printf "$(GREEN)$(subst .a,,$(NAME)) compiled! $(DEF_COLOR)\n"
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	@echo -e "$(YELLOW)Compiling: $< $(DEF_COLOR)" 
+	@printf "$(YELLOW)Compiling: $< $(DEF_COLOR) \n"
 	@$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 $(BUILD_DIR):
-	@echo -e "$(MAGENTA)Build dir not found. Creating...$(DEF_COLOR)" 
+	@printf "$(MAGENTA)Build dir not found. Creating...$(DEF_COLOR)\n"
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)/ft_printf
 	
 clean:
 	@rm -rf $(BUILD_DIR)
-	@echo -e "$(CYAN)$(subst .a,,$(NAME)) object files cleaned!$(DEF_COLOR)" 
+	@printf "$(CYAN)$(subst .a,,$(NAME)) object files cleaned!$(DEF_COLOR)\n"
 
 fclean: clean
 	@rm -f $(NAME)
-	@echo -e "$(CYAN)$(NAME) cleaned!$(DEF_COLOR)" 
+	@printf "$(CYAN)$(NAME) cleaned!$(DEF_COLOR)\n"
 
 re: fclean all
-	@echo -e "$(GREEN)Cleaned and rebuilt!$(DEF_COLOR)" 
+	@printf "$(GREEN)Cleaned and rebuilt!$(DEF_COLOR)\n"
 
 # Phony
 .PHONY: clean fclean bonus re all

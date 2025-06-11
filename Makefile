@@ -2,10 +2,11 @@
 CC			= cc
 RM			= rm -f
 CFLAGS		= -Wall -Wextra -Werror -g
-NAME		= pipex
 INCLUDE		= -Iinclude -Ilibft/include
 LINK		= -Llibft -lft
 LIBFT		= libft/libft.a
+NAME		= pipex
+NAME_BONUS	= pipex_bonus
 
 # Folders
 SRC_DIR		= src
@@ -25,45 +26,47 @@ WHITE = \033[0;97m
 # Files
 SRCS		= $(SRC_DIR)/pipex.c $(SRC_DIR)/utils.c
 SRCS_BONUS	= $(SRC_DIR)/pipex_bonus.c $(SRC_DIR)/utils.c
-OBJS		= $(BUILD_DIR)/pipex.o $(BUILD_DIR)/utils.o
-OBJS_BONUS	= $(BUILD_DIR)/pipex_bonus.o $(BUILD_DIR)/utils.o
+OBJS		= $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+OBJS_BONUS	= $(SRCS_BONUS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
 # Rules
 all: $(NAME)
 
 $(NAME): $(OBJS) $(LIBFT)
 	@$(CC) $(CFLAGS) $(OBJS) $(LINK) -o $(NAME)
-	@echo -e "$(GREEN)$@ compiled! $(DEF_COLOR)"
+	@printf "$(GREEN)$@ compiled! $(DEF_COLOR)\n"
 
-bonus: $(OBJS_BONUS) $(LIBFT)
+bonus: clean $(NAME_BONUS)
+
+$(NAME_BONUS): $(OBJS_BONUS) $(LIBFT)
 	@$(CC) $(CFLAGS) $(OBJS_BONUS) $(LINK) -o $(NAME)
-	@echo -e "$(GREEN)$@ compiled! $(DEF_COLOR)"
+	@printf "$(GREEN)$@ compiled! $(DEF_COLOR)\n"
 
 $(LIBFT):
-	@echo -e "$(CYAN)Compiling libft... $< $(DEF_COLOR)"
+	@printf "$(CYAN)Compiling libft... $< $(DEF_COLOR)\n"
 	@make -C libft all
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	@echo -e "$(YELLOW)Compiling: $< $(DEF_COLOR)" 
+	@printf "$(YELLOW)Compiling: $< $(DEF_COLOR)\n"
 	@$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(BUILD_DIR):
-	@echo -e "$(MAGENTA)Build dir not found. Creating...$(DEF_COLOR)" 
+	@printf "$(MAGENTA)Build dir not found. Creating...$(DEF_COLOR)\n"
 	@mkdir -p $(BUILD_DIR)
 	
 clean:
 	@rm -rf $(BUILD_DIR)
 	@make -C libft clean
-	@echo -e "$(GREEN)$(NAME) object files cleaned!$(DEF_COLOR)" 
+	@printf "$(GREEN)$(NAME) object files cleaned!$(DEF_COLOR)\n"
 
 fclean: clean
-	@rm -f $(NAME)
+	@rm -f $(NAME) $(NAME_BONUS)
 	@rm -f $(LIBFT)
-	@echo -e "$(GREEN)libft.a cleaned!$(DEF_COLOR)" 
-	@echo -e "$(GREEN)$(NAME) binaries cleaned!$(DEF_COLOR)" 
+	@printf "$(GREEN)libft.a cleaned!$(DEF_COLOR)\n"
+	@printf "$(GREEN)$(NAME) binaries cleaned!$(DEF_COLOR)\n"
 
 re: fclean all
-	@echo -e "$(GREEN)Cleaned and rebuilt!$(DEF_COLOR)" 
+	@printf "$(GREEN)Cleaned and rebuilt!$(DEF_COLOR)\n"
 
 # Phony
 .PHONY: clean fclean bonus re all

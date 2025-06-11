@@ -23,12 +23,9 @@ char	*find_path(char *cmd, char *envp[])
 	if (!paths)
 		return (NULL);
 	if (strchr(cmd, '/'))
-	{
-		free_split(paths);
 		return (cmd);
-	}
 	i = 0;
-	while (paths[i])
+	while (paths && paths[i])
 	{
 		path_slash = ft_strjoin(paths[i], "/");
 		full_path = ft_strjoin(path_slash, cmd);
@@ -60,7 +57,7 @@ void	execute(char *cmd, char *envp[])
 		ft_putstr_fd(cmd_split[0], 2);
 		ft_putchar_fd('\n', 2);
 		free_split(cmd_split);
-		error();
+		exit(127);
 	}
 	if (execv(path, cmd_split) == -1)
 	{
@@ -140,12 +137,14 @@ int	main(int argc, char *argv[], char *envp[])
 		output_fd = open_file(argv[argc - 1], 1);
 		while (i < argc - 2)
 			children_process(argv[i++], envp);
-		while (wait(NULL) > 0);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
 		execute(argv[argc - 2], envp);
 	}
 	else
+	{
 		ft_printf("Usage: ./pipex infile \"cmd1\" [\"cmd2\" ...] outfile\n");
+		return (EXIT_FAILURE);
+	}
 	return (EXIT_SUCCESS);
 }
