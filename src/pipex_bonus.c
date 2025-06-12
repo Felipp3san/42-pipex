@@ -12,6 +12,10 @@
 
 #include "pipex.h"
 
+/* Looks for the command in the system, using paths 
+ * extracted from the PATH variable from envp, or return
+ * it directly if cmd is a fullpath */
+
 char	*find_path(char *cmd, char *envp[])
 {
 	char	**paths;
@@ -19,11 +23,11 @@ char	*find_path(char *cmd, char *envp[])
 	char	*path_slash;
 	int		i;
 
+	if (strchr(cmd, '/'))
+		return (cmd);
 	paths = extract_paths_envp(envp);
 	if (!paths)
 		return (NULL);
-	if (strchr(cmd, '/'))
-		return (cmd);
 	i = 0;
 	while (paths && paths[i])
 	{
@@ -39,6 +43,10 @@ char	*find_path(char *cmd, char *envp[])
 	return (NULL);
 }
 
+/* Splits the command as required by execv, looks 
+ * for it in the path and executes it, or executes 
+ * it directly if passed as full path command. */
+
 void	execute(char *cmd, char *envp[])
 {
 	char	**cmd_split;
@@ -50,7 +58,7 @@ void	execute(char *cmd, char *envp[])
 	if (cmd_split[0])
 		path = find_path(cmd_split[0], envp);
 	else
-		path = find_path(" ", envp); 
+		path = find_path(" ", envp);
 	if (!path)
 	{
 		ft_putstr_fd("pipex: command not found: ", 2);
@@ -66,6 +74,9 @@ void	execute(char *cmd, char *envp[])
 		error();
 	}
 }
+
+/* Creates the pipe, forks the process to execute 
+ * the command in a child process. */
 
 pid_t	children_process(char *cmd, char *envp[])
 {
@@ -89,6 +100,9 @@ pid_t	children_process(char *cmd, char *envp[])
 	close(pipe_fd[1]);
 	return (pid);
 }
+
+/* Creates a pipe and starts a new process to capture input from STDIN 
+ * and redirects it to the pipe, so it can the read later by another command. */
 
 void	here_doc(char *limiter)
 {
@@ -119,6 +133,9 @@ void	here_doc(char *limiter)
 	wait(NULL);
 }
 
+/* Orchestrates the pipex program. Does an argc verification, 
+ * opens input/output files, calls child processes and last process. */
+
 int	main(int argc, char *argv[], char *envp[])
 {
 	int		i;
@@ -133,18 +150,14 @@ int	main(int argc, char *argv[], char *envp[])
 			i++;
 		}
 		else
-			open_file(argv[1], 0);
-		output_fd = open_file(argv[argc - 1], 1);
+			open_file(argv[1], INPUT);
+		output_fd = open_file(argv[argc - 1], OUTPUT);
 		while (i < argc - 2)
 			children_process(argv[i++], envp);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
 		execute(argv[argc - 2], envp);
 	}
-	else
-	{
-		ft_printf("Usage: ./pipex infile \"cmd1\" [\"cmd2\" ...] outfile\n");
-		return (EXIT_FAILURE);
-	}
-	return (EXIT_SUCCESS);
+	ft_printf("Usage: ./pipex infile \"cmd1\" [\"cmd2\" ...] outfile\n");
+	return (EXIT_FAILURE);
 }

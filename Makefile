@@ -36,7 +36,7 @@ $(NAME): $(OBJS) $(LIBFT)
 	@$(CC) $(CFLAGS) $(OBJS) $(LINK) -o $(NAME)
 	@printf "$(GREEN)$@ compiled! $(DEF_COLOR)\n"
 
-bonus: clean $(NAME_BONUS)
+bonus: $(NAME_BONUS)
 
 $(NAME_BONUS): $(OBJS_BONUS) $(LIBFT)
 	@$(CC) $(CFLAGS) $(OBJS_BONUS) $(LINK) -o $(NAME)
@@ -69,4 +69,4 @@ re: fclean all
 	@printf "$(GREEN)Cleaned and rebuilt!$(DEF_COLOR)\n"
 
 # Phony
-.PHONY: clean fclean bonus re all
+.PHONY: clean fclean bonus re all $(NAME_BONUS)

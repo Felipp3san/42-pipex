@@ -21,10 +21,16 @@
 # include <errno.h>
 # include "libft.h"
 
+enum e_filetype
+{
+	INPUT = 0,
+	OUTPUT = 1
+};
+
 int		open_file(char *filename, int filetype);
 char	**extract_paths_envp(char *envp[]);
 char	*build_cmd_path(char *path, char *cmd);
 void	free_split(char **arr);
-void	error();
+void	error(void);
 
 #endif
