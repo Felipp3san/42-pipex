@@ -110,8 +110,8 @@ int	main(int argc, char *argv[], char *envp[])
 
 	if (argc == 5)
 	{
-		open_file(argv[1], 0);
-		output_fd = open_file(argv[argc - 1], 1);
+		open_file(argv[1], INPUT);
+		output_fd = open_file(argv[argc - 1], OUTPUT);
 		children_process(argv[2], envp);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
