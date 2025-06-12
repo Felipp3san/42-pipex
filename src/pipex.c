@@ -12,9 +12,8 @@
 
 #include "pipex.h"
 
-/* Looks for the command in the system, using paths 
- * extracted from the PATH variable from envp, or return
- * it directly if cmd is a fullpath */
+/* Looks for the command in the system, using paths extracted from the PATH 
+ * variable from envp, or return it directly if cmd is a fullpath */
 
 char	*find_path(char *cmd, char *envp[])
 {
@@ -43,9 +42,8 @@ char	*find_path(char *cmd, char *envp[])
 	return (NULL);
 }
 
-/* Splits the command as required by execv, looks 
- * for it in the path and executes it, or executes 
- * it directly if passed as full path command. */
+/* Splits the command as required by execv, looks for it in the path and 
+ * executes it, or executes it directly if passed as full path command. */
 
 void	execute(char *cmd, char *envp[])
 {
@@ -75,8 +73,8 @@ void	execute(char *cmd, char *envp[])
 	}
 }
 
-/* Creates the pipe, forks the process to execute 
- * the command in a child process. */
+/* Creates the pipe, forks the process to execute the command in a child 
+ * process. */
 
 void	children_process(char *cmd, char *envp[])
 {
@@ -101,8 +99,8 @@ void	children_process(char *cmd, char *envp[])
 	waitpid(pid, NULL, 0);
 }
 
-/* Orchestrates the pipex program. Does an argc verification, 
- * opens input/output files, calls child processes and last process. */
+/* Orchestrates the pipex program. Does an argc verification, opens 
+ * input/output files, calls child processes and last process. */
 
 int	main(int argc, char *argv[], char *envp[])
 {

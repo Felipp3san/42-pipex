@@ -30,9 +30,9 @@ void	free_split(char **arr)
 	free(arr);
 }
 
-/* Opens a file based on its type, if its an INPUT file, tries to open it
- * and redirects STDIN to it. if it is an OUTPUT file tries to open it,
- * and if it fails, terminates the program with an error. */
+/* Opens a file based on its type, if its an INPUT file, tries to open it and 
+ * redirects STDIN to it. if it is an OUTPUT file tries to open it, and if it 
+ * fails, terminates the program with an error. */
 
 int	open_file(char *filename, int filetype)
 {

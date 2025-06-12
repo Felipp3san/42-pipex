@@ -12,9 +12,8 @@
 
 #include "pipex.h"
 
-/* Looks for the command in the system, using paths 
- * extracted from the PATH variable from envp, or return
- * it directly if cmd is a fullpath */
+/* Looks for the command in the system, using paths extracted from the PATH 
+ * variable from envp, or return it directly if cmd is a fullpath */
 
 char	*find_path(char *cmd, char *envp[])
 {
@@ -43,9 +42,8 @@ char	*find_path(char *cmd, char *envp[])
 	return (NULL);
 }
 
-/* Splits the command as required by execv, looks 
- * for it in the path and executes it, or executes 
- * it directly if passed as full path command. */
+/* Splits the command as required by execv, looks for it in the path and 
+ * executes it, or executes it directly if passed as full path command. */
 
 void	execute(char *cmd, char *envp[])
 {
@@ -75,8 +73,8 @@ void	execute(char *cmd, char *envp[])
 	}
 }
 
-/* Creates the pipe, forks the process to execute 
- * the command in a child process. */
+/* Creates the pipe, forks the process to execute the command in a child 
+ * process. */
 
 void	children_process(char *cmd, char *envp[])
 {
@@ -100,8 +98,8 @@ void	children_process(char *cmd, char *envp[])
 	close(pipe_fd[1]);
 }
 
-/* Creates a pipe and starts a new process to capture input from STDIN 
- * and redirects it to the pipe, so it can the read later by another command. */
+/* Creates a pipe and starts a new process to capture input from STDIN and 
+ * redirects it to the pipe, so it can the read later by another command. */
 
 void	here_doc(char *limiter)
 {
@@ -132,8 +130,8 @@ void	here_doc(char *limiter)
 	wait(NULL);
 }
 
-/* Orchestrates the pipex program. Does an argc verification, 
- * opens input/output files, calls child processes and last process. */
+/* Orchestrates the pipex program. Does an argc verification, opens 
+ * input/output files, calls child processes and last process. */
 
 int	main(int argc, char *argv[], char *envp[])
 {
@@ -153,7 +151,8 @@ int	main(int argc, char *argv[], char *envp[])
 		output_fd = open_file(argv[argc - 1], OUTPUT);
 		while (i < argc - 2)
 			children_process(argv[i++], envp);
-		while (wait(NULL) > 0);
+		while (wait(NULL) > 0)
+			;
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
 		execute(argv[argc - 2], envp);
