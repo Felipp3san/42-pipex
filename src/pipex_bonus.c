@@ -78,7 +78,7 @@ void	execute(char *cmd, char *envp[])
 /* Creates the pipe, forks the process to execute 
  * the command in a child process. */
 
-pid_t	children_process(char *cmd, char *envp[])
+void	children_process(char *cmd, char *envp[])
 {
 	int		pipe_fd[2];
 	pid_t	pid;
@@ -98,7 +98,6 @@ pid_t	children_process(char *cmd, char *envp[])
 	dup2(pipe_fd[0], STDIN_FILENO);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
-	return (pid);
 }
 
 /* Creates a pipe and starts a new process to capture input from STDIN 
@@ -154,6 +153,7 @@ int	main(int argc, char *argv[], char *envp[])
 		output_fd = open_file(argv[argc - 1], OUTPUT);
 		while (i < argc - 2)
 			children_process(argv[i++], envp);
+		while (wait(NULL) > 0);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
 		execute(argv[argc - 2], envp);
