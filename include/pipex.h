@@ -27,7 +27,8 @@ enum e_filetype
 	OUTPUT = 1
 };
 
-int		open_file(char *filename, int filetype);
+int		open_input(char *file_path);
+int		open_output(char *filename, int append);
 char	**extract_paths_envp(char *envp[]);
 char	*build_cmd_path(char *path, char *cmd);
 void	free_split(char **arr);

@@ -76,7 +76,7 @@ void	execute(char *cmd, char *envp[])
 /* Creates the pipe, forks the process to execute the command in a child 
  * process. */
 
-void	children_process(char *cmd, char *envp[])
+void	children_process(char *cmd, char *envp[], int last)
 {
 	int		pipe_fd[2];
 	pid_t	pid;
@@ -89,14 +89,15 @@ void	children_process(char *cmd, char *envp[])
 	if (pid == 0)
 	{
 		close(pipe_fd[0]);
-		dup2(pipe_fd[1], STDOUT_FILENO);
+		if (!last)
+			dup2(pipe_fd[1], STDOUT_FILENO);
 		close(pipe_fd[1]);
 		execute(cmd, envp);
 	}
-	dup2(pipe_fd[0], STDIN_FILENO);
+	if (!last)
+		dup2(pipe_fd[0], STDIN_FILENO);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
-	waitpid(pid, NULL, 0);
 }
 
 /* Orchestrates the pipex program. Does an argc verification, opens 
@@ -108,13 +109,16 @@ int	main(int argc, char *argv[], char *envp[])
 
 	if (argc == 5)
 	{
-		open_file(argv[1], INPUT);
-		output_fd = open_file(argv[argc - 1], OUTPUT);
-		children_process(argv[2], envp);
+		open_input(argv[1]);
+		output_fd = open_output(argv[argc - 1], 0);
+		children_process(argv[2], envp, 0);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
-		execute(argv[argc - 2], envp);
+		children_process(argv[argc - 2], envp, 1);
+		while (wait(NULL) > 0)
+			;
 	}
-	ft_printf("Usage: ./pipex infile \"cmd1\" [\"cmd2\" ...] outfile\n");
-	return (EXIT_FAILURE);
+	else
+		ft_dprintf(2, "Usage: ./pipex infile \"cmd1\" [\"cmd2\"...] outfile\n");
+	return (EXIT_SUCCESS);
 }

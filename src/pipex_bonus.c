@@ -76,7 +76,7 @@ void	execute(char *cmd, char *envp[])
 /* Creates the pipe, forks the process to execute the command in a child 
  * process. */
 
-void	children_process(char *cmd, char *envp[])
+pid_t	children_process(char *cmd, char *envp[], int last)
 {
 	int		pipe_fd[2];
 	pid_t	pid;
@@ -89,19 +89,22 @@ void	children_process(char *cmd, char *envp[])
 	if (pid == 0)
 	{
 		close(pipe_fd[0]);
-		dup2(pipe_fd[1], STDOUT_FILENO);
+		if (!last)
+			dup2(pipe_fd[1], STDOUT_FILENO);
 		close(pipe_fd[1]);
 		execute(cmd, envp);
 	}
-	dup2(pipe_fd[0], STDIN_FILENO);
+	if (!last)
+		dup2(pipe_fd[0], STDIN_FILENO);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
+	return (pid);
 }
 
 /* Creates a pipe and starts a new process to capture input from STDIN and 
  * redirects it to the pipe, so it can the read later by another command. */
 
-void	here_doc(char *limiter)
+int	here_doc(char *limiter)
 {
 	int		pipe_fd[2];
 	char	*line;
@@ -127,7 +130,7 @@ void	here_doc(char *limiter)
 	dup2(pipe_fd[0], STDIN_FILENO);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
-	wait(NULL);
+	return (wait(NULL), 1);
 }
 
 /* Orchestrates the pipex program. Does an argc verification, opens 
@@ -137,26 +140,26 @@ int	main(int argc, char *argv[], char *envp[])
 {
 	int		i;
 	int		output_fd;
+	int		append;
 
 	if (argc > 4)
 	{
-		i = 2;
+		append = 0;
 		if (ft_strcmp(argv[1], "here_doc") == 0)
-		{
-			here_doc(argv[2]);
-			i++;
-		}
+			append = here_doc(argv[2]);
 		else
-			open_file(argv[1], INPUT);
-		output_fd = open_file(argv[argc - 1], OUTPUT);
+			open_input(argv[1]);
+		i = 2 + append;
+		output_fd = open_output(argv[argc - 1], append);
 		while (i < argc - 2)
-			children_process(argv[i++], envp);
-		while (wait(NULL) > 0)
-			;
+			children_process(argv[i++], envp, 0);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
-		execute(argv[argc - 2], envp);
+		while (wait(NULL) > 0)
+			;
+		children_process(argv[argc - 2], envp, 1);
 	}
-	ft_printf("Usage: ./pipex infile \"cmd1\" [\"cmd2\" ...] outfile\n");
-	return (EXIT_FAILURE);
+	else
+		ft_dprintf(2, "Usage: ./pipex infile \"cmd1\" [\"cmd2\"...] outfile\n");
+	return (EXIT_SUCCESS);
 }
