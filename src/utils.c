@@ -44,7 +44,7 @@ int	open_output(char *filename, int append)
 	if (fd == -1)
 	{
 		ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), filename);
-		error();
+		exit(EXIT_FAILURE);
 	}
 	return (fd);
 }
@@ -62,21 +62,31 @@ int	open_input(char *file_path)
 		ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), file_path);
 		fd = open("/dev/null", O_RDONLY);
 		if (fd == -1)
-			error();
+			exit(EXIT_FAILURE);
 	}
 	dup2(fd, STDIN_FILENO);
 	close(fd);
 	return (fd);
 }
 
-/* Calls exit function with different types of error codes. */
+/* Waits for all children processes to finish, and if its the last, return 
+ * its status code to end the program. */
 
-void	error(void)
+int	wait_processes(int last_pid)
 {
-	if (errno == ENOENT)
-		exit(127);
-	else
-		exit(EXIT_FAILURE);
+	int	pid;
+	int	status;
+	int	last_status;
+
+	pid = 1;
+	last_status = 0;
+	while (pid > 0)
+	{
+		pid = wait(&status);
+		if (pid == last_pid && WIFEXITED(status))
+			last_status = WEXITSTATUS(status);
+	}
+	return (last_status);
 }
 
 /* Extracts the PATH line from envp, then split it in an array of paths 
