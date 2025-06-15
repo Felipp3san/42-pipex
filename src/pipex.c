@@ -122,6 +122,6 @@ int	main(int argc, char *argv[], char *envp[])
 		return (pid.last_status);
 	}
 	else
-		ft_dprintf(2, "Usage: ./pipex infile \"cmd1\" [\"cmd2\"...] outfile\n");
+		ft_dprintf(2, "Usage: ./pipex infile \"cmd1\" \"cmd2\" outfile\n");
 	return (EXIT_SUCCESS);
 }
