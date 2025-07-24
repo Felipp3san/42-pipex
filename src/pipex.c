@@ -22,6 +22,8 @@ char	*find_path(char *cmd, char *envp[])
 	char	*path_slash;
 	int		i;
 
+	if (!cmd)
+		cmd = " ";
 	if (strchr(cmd, '/'))
 		return (cmd);
 	paths = extract_paths_envp(envp);
@@ -52,11 +54,8 @@ void	execute(char *cmd, char *envp[])
 
 	cmd_split = ft_split_quotes(cmd, ' ');
 	if (!cmd_split)
-		error();
-	if (cmd_split[0])
-		path = find_path(cmd_split[0], envp);
-	else
-		path = find_path(" ", envp);
+		exit(EXIT_FAILURE);
+	path = find_path(cmd_split[0], envp);
 	if (!path)
 	{
 		ft_putstr_fd("pipex: command not found: ", 2);
@@ -69,34 +68,38 @@ void	execute(char *cmd, char *envp[])
 	{
 		ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), cmd_split[0]);
 		free_split(cmd_split);
-		error();
+		if (errno == ENOENT)
+			exit(127);
+		exit(EXIT_FAILURE);
 	}
 }
 
 /* Creates the pipe, forks the process to execute the command in a child 
  * process. */
 
-void	children_process(char *cmd, char *envp[])
+pid_t	children_process(char *cmd, char *envp[], int last)
 {
 	int		pipe_fd[2];
 	pid_t	pid;
 
 	if (pipe(pipe_fd) == -1)
-		error();
+		exit(EXIT_FAILURE);
 	pid = fork();
 	if (pid == -1)
-		error();
+		exit(EXIT_FAILURE);
 	if (pid == 0)
 	{
 		close(pipe_fd[0]);
-		dup2(pipe_fd[1], STDOUT_FILENO);
+		if (!last)
+			dup2(pipe_fd[1], STDOUT_FILENO);
 		close(pipe_fd[1]);
 		execute(cmd, envp);
 	}
-	dup2(pipe_fd[0], STDIN_FILENO);
+	if (!last)
+		dup2(pipe_fd[0], STDIN_FILENO);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
-	waitpid(pid, NULL, 0);
+	return (pid);
 }
 
 /* Orchestrates the pipex program. Does an argc verification, opens 
@@ -104,17 +107,21 @@ void	children_process(char *cmd, char *envp[])
 
 int	main(int argc, char *argv[], char *envp[])
 {
-	int	output_fd;
+	int		output_fd;
+	t_pid	pid;
 
 	if (argc == 5)
 	{
-		open_file(argv[1], INPUT);
-		output_fd = open_file(argv[argc - 1], OUTPUT);
-		children_process(argv[2], envp);
+		open_input(argv[1]);
+		output_fd = open_output(argv[argc - 1], 0);
+		children_process(argv[2], envp, 0);
 		dup2(output_fd, STDOUT_FILENO);
 		close(output_fd);
-		execute(argv[argc - 2], envp);
+		pid.last_pid = children_process(argv[argc - 2], envp, 1);
+		pid.last_status = wait_processes(pid.last_pid);
+		return (pid.last_status);
 	}
-	ft_printf("Usage: ./pipex infile \"cmd1\" [\"cmd2\" ...] outfile\n");
-	return (EXIT_FAILURE);
+	else
+		ft_dprintf(2, "Usage: ./pipex infile \"cmd1\" \"cmd2\" outfile\n");
+	return (EXIT_SUCCESS);
 }

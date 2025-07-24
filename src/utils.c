@@ -30,49 +30,63 @@ void	free_split(char **arr)
 	free(arr);
 }
 
-/* Opens a file based on its type, if its an INPUT file, tries to open it and 
- * redirects STDIN to it. if it is an OUTPUT file tries to open it, and if it 
- * fails, terminates the program with an error. */
+/* Tries to open the OUTPUT file, in append or normal mode.
+ * if it fails, terminates the program with an error. */
 
-int	open_file(char *filename, int filetype)
+int	open_output(char *filename, int append)
 {
 	int	fd;
 
-	if (filetype == 0)
-	{
-		fd = open(filename, O_RDONLY);
-		if (fd == -1)
-		{
-			ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), filename);
-			fd = open("/dev/null", O_RDONLY);
-			if (fd == -1)
-				error();
-		}
-		dup2(fd, STDIN_FILENO);
-		close(fd);
-	}
+	if (append)
+		fd = open(filename, O_CREAT | O_APPEND | O_WRONLY, 0644);
 	else
-	{
 		fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-		if (fd == -1)
-		{
-			ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), filename);
-			error();
-		}
+	if (fd == -1)
+	{
+		ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), filename);
+		exit(EXIT_FAILURE);
 	}
 	return (fd);
 }
 
-/* Calls exit function with different types of error codes. */
+/* Tries to open the INPUT file, and redirects STDIN to it. 
+ * if it fails, terminates the program with an error. */
 
-void	error(void)
+int	open_input(char *file_path)
 {
-	if (errno == ENOENT)
-		exit(127);
-	else if (errno == EACCES)
-		exit(126);
-	else
-		exit(EXIT_FAILURE);
+	int	fd;
+
+	fd = open(file_path, O_RDONLY);
+	if (fd == -1)
+	{
+		ft_dprintf(2, "pipex: %s: %s\n", strerror(errno), file_path);
+		fd = open("/dev/null", O_RDONLY);
+		if (fd == -1)
+			exit(EXIT_FAILURE);
+	}
+	dup2(fd, STDIN_FILENO);
+	close(fd);
+	return (fd);
+}
+
+/* Waits for all children processes to finish, and if its the last, return 
+ * its status code to end the program. */
+
+int	wait_processes(int last_pid)
+{
+	int	pid;
+	int	status;
+	int	last_status;
+
+	pid = 1;
+	last_status = 0;
+	while (pid > 0)
+	{
+		pid = wait(&status);
+		if (pid == last_pid && WIFEXITED(status))
+			last_status = WEXITSTATUS(status);
+	}
+	return (last_status);
 }
 
 /* Extracts the PATH line from envp, then split it in an array of paths 
