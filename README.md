@@ -1,4 +1,4 @@
-# PIPEX
+# Pipex
 
 A **Unix command-line tool** built in **C**, designed to replicate **shell pipelines** and reinforce understanding of process management, file descriptors, and inter-process communication. Pipex allows executing commands with redirected input and output, mimicking basic Bash pipeline behavior.
 
