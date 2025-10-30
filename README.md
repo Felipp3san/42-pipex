@@ -28,8 +28,8 @@ A **Unix command-line tool** built in **C**, designed to replicate **shell pipel
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Felipp3san/pipex.git
-cd pipex
+git clone https://github.com/Felipp3san/42-pipex
+cd 42-pipex
 ```
 
 2. Compile the project:
